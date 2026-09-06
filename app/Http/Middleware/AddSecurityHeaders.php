@@ -15,10 +15,15 @@ class AddSecurityHeaders
      * framed. Strict-Transport-Security is left to Cloudflare, which already
      * sends it on every response.
      *
+     * X-Robots-Tag keeps the panel out of search engines even when a crawler
+     * reaches a URL without reading robots.txt first, and it is the only signal
+     * that works for non-HTML responses, which carry no meta tag.
+     *
      * @var array<string, string>
      */
     private const HEADERS = [
         'Content-Security-Policy' => "frame-ancestors 'none'",
+        'X-Robots-Tag' => 'noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate',
         'X-Frame-Options' => 'DENY',
         'X-Content-Type-Options' => 'nosniff',
         'Referrer-Policy' => 'strict-origin-when-cross-origin',

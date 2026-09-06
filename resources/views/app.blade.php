@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+        <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+        <meta name="googlebot-news" content="noindex, nofollow">
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
         <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 
