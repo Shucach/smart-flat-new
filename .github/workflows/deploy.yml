@@ -1,0 +1,132 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_USER: ${{ vars.DEPLOY_USER || 'pi' }}
+  DEPLOY_HOST: ${{ vars.DEPLOY_HOST || 'hss.vanzzo.net' }}
+  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/var/www/sf.vanzzo.net/code' }}
+  DEPLOY_CONTAINER: ${{ vars.DEPLOY_CONTAINER || 'ubuntu_22_php83_apache2' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      # Wayfinder writes resources/js/{actions,routes,wayfinder} by booting Artisan
+      # during the Vite build, so the runner needs a bootable app. This .env stays on
+      # the runner: rsync excludes it and the server keeps its own.
+      - name: Prepare the build environment
+        env:
+          APP_NAME: ${{ vars.APP_NAME || 'SF by vanzzo' }}
+          APP_URL: ${{ vars.APP_URL || 'https://sf.vanzzo.net' }}
+        run: |
+          cp .env.example .env
+          sed -i "s|^APP_NAME=.*|APP_NAME=\"${APP_NAME}\"|" .env
+          sed -i "s|^APP_URL=.*|APP_URL=${APP_URL}|" .env
+          php artisan key:generate
+          touch database/database.sqlite
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Install cloudflared
+        run: |
+          curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared-linux-amd64
+          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+
+      - name: Write the SSH private key
+        run: |
+          cat << 'EOF' > key.pem
+          ${{ secrets.SSH_PRIVATE_KEY }}
+          EOF
+          chmod 600 key.pem
+
+      # rsync needs to own the tree while it writes; Apache gets it back afterwards.
+      - name: Take ownership of the target directory
+        run: |
+          ssh -i key.pem \
+            -o "ProxyCommand=cloudflared access ssh --hostname=${DEPLOY_HOST}" \
+            -o StrictHostKeyChecking=no \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "sudo chown -R ${DEPLOY_USER}:${DEPLOY_USER} ${DEPLOY_PATH}"
+
+      - name: Deploy via rsync over the Cloudflare tunnel
+        run: |
+          export RSYNC_RSH='ssh -i key.pem -o "ProxyCommand=cloudflared access ssh --hostname='"${DEPLOY_HOST}"'" -o StrictHostKeyChecking=no'
+
+          rsync -az --delete \
+            --no-owner --no-group --no-perms \
+            --exclude '/.git' \
+            --exclude '/.github' \
+            --exclude '/.gitattributes' \
+            --exclude '/.gitignore' \
+            --exclude '/.editorconfig' \
+            --exclude '/.claude' \
+            --exclude '/.junie' \
+            --exclude '/.idea' \
+            --exclude '/.env' \
+            --exclude '/node_modules/' \
+            --exclude '/old_code/' \
+            --exclude '/tests/' \
+            --exclude '/storage/' \
+            --exclude '/bootstrap/cache/*.php' \
+            --exclude '/database/database.sqlite' \
+            --exclude '/public/storage' \
+            --exclude '/public/hot' \
+            ./ \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+
+      # `route:cache` is deliberately absent: routes/settings.php registers a closure
+      # route, which Laravel cannot serialise.
+      - name: Migrate and rebuild the caches
+        run: |
+          ssh -i key.pem \
+            -o "ProxyCommand=cloudflared access ssh --hostname=${DEPLOY_HOST}" \
+            -o StrictHostKeyChecking=no \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
+              set -e
+              sudo chown -R www-data:www-data ${DEPLOY_PATH}
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan migrate --force'
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan storage:link'
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan optimize:clear'
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan config:cache'
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan event:cache'
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan view:cache'
+          EOF

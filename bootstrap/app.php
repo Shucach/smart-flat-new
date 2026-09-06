@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Production sits behind a Cloudflare tunnel that terminates TLS and talks
+        // plain HTTP to Apache, so the forwarded headers are the only way the app
+        // learns the request was https and keeps generating https URLs.
+        $middleware->trustProxies(at: '*');
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
