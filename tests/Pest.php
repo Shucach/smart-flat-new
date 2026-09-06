@@ -65,10 +65,12 @@ function userWithPermissions(Permission ...$permissions): User
 
 /**
  * Create a user that owns the super role.
+ *
+ * @param  array<string, mixed>  $attributes
  */
-function administrator(): User
+function administrator(array $attributes = []): User
 {
-    $user = User::factory()->create();
+    $user = User::factory()->create($attributes);
 
     $user->roles()->attach(Role::factory()->admin()->create());
 

@@ -7,7 +7,9 @@ use Inertia\Testing\AssertableInertia;
 
 describe('index', function () {
     it('lists the users with their roles', function () {
-        $administrator = administrator();
+        // The listing is ordered by name, so both names are pinned: a faker name would
+        // sort either side of 'Аня' depending on the configured faker locale.
+        $administrator = administrator(['name' => 'Богдан']);
         $viewer = User::factory()->create(['name' => 'Аня', 'email' => 'anya@example.test']);
         $viewer->roles()->attach(Role::factory()->create(['name' => 'viewer', 'label' => 'Спостерігач']));
 
