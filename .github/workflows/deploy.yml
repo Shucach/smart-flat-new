@@ -71,17 +71,19 @@ jobs:
           chmod +x cloudflared-linux-amd64
           sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
 
+      # The key lives outside the workspace on purpose: rsync ships `./`, so a key
+      # written next to the sources would be copied onto the server.
       - name: Write the SSH private key
         run: |
-          cat << 'EOF' > key.pem
+          cat << 'EOF' > "${RUNNER_TEMP}/deploy_key"
           ${{ secrets.SSH_PRIVATE_KEY }}
           EOF
-          chmod 600 key.pem
+          chmod 600 "${RUNNER_TEMP}/deploy_key"
 
       # rsync needs to own the tree while it writes; Apache gets it back afterwards.
       - name: Take ownership of the target directory
         run: |
-          ssh -i key.pem \
+          ssh -i "${RUNNER_TEMP}/deploy_key" \
             -o "ProxyCommand=cloudflared access ssh --hostname=${DEPLOY_HOST}" \
             -o StrictHostKeyChecking=no \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
@@ -89,7 +91,7 @@ jobs:
 
       - name: Deploy via rsync over the Cloudflare tunnel
         run: |
-          export RSYNC_RSH='ssh -i key.pem -o "ProxyCommand=cloudflared access ssh --hostname='"${DEPLOY_HOST}"'" -o StrictHostKeyChecking=no'
+          export RSYNC_RSH='ssh -i '"${RUNNER_TEMP}/deploy_key"' -o "ProxyCommand=cloudflared access ssh --hostname='"${DEPLOY_HOST}"'" -o StrictHostKeyChecking=no'
 
           rsync -az --delete \
             --no-owner --no-group --no-perms \
@@ -104,7 +106,6 @@ jobs:
             --exclude '/.env' \
             --exclude '/node_modules/' \
             --exclude '/old_code/' \
-            --exclude '/tests/' \
             --exclude '/storage/' \
             --exclude '/bootstrap/cache/*.php' \
             --exclude '/database/database.sqlite' \
@@ -117,11 +118,12 @@ jobs:
       # route, which Laravel cannot serialise.
       - name: Migrate and rebuild the caches
         run: |
-          ssh -i key.pem \
+          ssh -i "${RUNNER_TEMP}/deploy_key" \
             -o "ProxyCommand=cloudflared access ssh --hostname=${DEPLOY_HOST}" \
             -o StrictHostKeyChecking=no \
             "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
               set -e
+              sudo rm -f ${DEPLOY_PATH}/bootstrap/cache/*.php
               sudo chown -R www-data:www-data ${DEPLOY_PATH}
               docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan migrate --force'
               docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan storage:link'
