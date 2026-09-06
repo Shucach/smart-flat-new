@@ -82,9 +82,35 @@ export type MediaListing = {
 
 /* ------------------------------------------------------------------- frame */
 
+export type FrameMediaKind = 'image' | 'video';
+
 export type FrameImage = {
     name: string;
     preview: string;
+    kind: FrameMediaKind;
+};
+
+export type FrameUploadStatus =
+    | 'queued'
+    | 'transcoding'
+    | 'uploading'
+    | 'completed'
+    | 'failed';
+
+/** One file the queue is working on, as the frame page reads it back. */
+export type FrameUpload = {
+    id: number;
+    name: string;
+    kind: FrameMediaKind;
+    status: FrameUploadStatus;
+    statusLabel: string;
+    progress: number;
+    message: string | null;
+};
+
+export type FrameLimits = {
+    videoSeconds: number;
+    videoMegabytes: number;
 };
 
 export type FramePagination = {

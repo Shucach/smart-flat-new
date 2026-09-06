@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { CloudUpload, ImageOff, RefreshCw, Trash, X } from '@lucide/vue';
+import { Head, router, useForm, usePoll } from '@inertiajs/vue3';
+import { CloudUpload, ImageOff, Play, RefreshCw, Trash, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import FrameUploadQueue from '@/components/FrameUploadQueue.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import SectionCard from '@/components/SectionCard.vue';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissions } from '@/composables/usePermissions';
 import { pluralizeUk } from '@/lib/format';
 import frame from '@/routes/frame';
-import type { FrameImage, FramePagination } from '@/types';
+import type {
+    FrameImage,
+    FrameLimits,
+    FramePagination,
+    FrameUpload,
+} from '@/types';
 
 const props = defineProps<{
     images: FrameImage[];
     pagination: FramePagination;
+    uploads: FrameUpload[];
+    limits: FrameLimits;
 }>();
 
 defineOptions({
@@ -33,12 +41,13 @@ const { can } = usePermissions();
 
 /* ------------------------------------------------------------------ upload */
 
-type PendingImage = {
+type PendingFile = {
     file: File;
     previewUrl: string;
+    isVideo: boolean;
 };
 
-const pendingImages = ref<PendingImage[]>([]);
+const pendingImages = ref<PendingFile[]>([]);
 const isDraggingOver = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -52,13 +61,16 @@ function addFiles(files: FileList | null): void {
     }
 
     for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) {
+        const isVideo = file.type.startsWith('video/');
+
+        if (!isVideo && !file.type.startsWith('image/')) {
             continue;
         }
 
         pendingImages.value.push({
             file,
             previewUrl: URL.createObjectURL(file),
+            isVideo,
         });
     }
 }
@@ -104,10 +116,50 @@ function submitUpload(): void {
         onSuccess: () => {
             clearPendingImages();
             uploadForm.reset();
-            reloadGallery();
+            queuePoll.start();
         },
     });
 }
+
+/* ------------------------------------------------------------------- queue */
+
+/**
+ * A clip is converted to the panel's own 600x1024 H.264 before it is sent, which
+ * takes minutes of the server's time. The row for each file is polled so the
+ * page can say what is happening instead of leaving the upload to disappear.
+ */
+const queuePoll = usePoll(
+    2000,
+    { only: ['uploads'] },
+    { autoStart: props.uploads.some((upload) => !isSettled(upload)) },
+);
+
+function isSettled(upload: FrameUpload): boolean {
+    return upload.status === 'completed' || upload.status === 'failed';
+}
+
+watch(
+    () => props.uploads,
+    (uploads, previous) => {
+        if (uploads.every(isSettled)) {
+            queuePoll.stop();
+        } else {
+            queuePoll.start();
+        }
+
+        const wasCompleted = (previous ?? []).filter(
+            (upload) => upload.status === 'completed',
+        ).length;
+        const isCompleted = uploads.filter(
+            (upload) => upload.status === 'completed',
+        ).length;
+
+        // A file that has just landed on the frame belongs in the gallery below.
+        if (isCompleted > wasCompleted) {
+            reloadGallery();
+        }
+    },
+);
 
 /* ----------------------------------------------------------------- gallery */
 
@@ -243,7 +295,10 @@ function confirmDeletion(): void {
     });
 }
 
-onBeforeUnmount(clearPendingImages);
+onBeforeUnmount(() => {
+    queuePoll.stop();
+    clearPendingImages();
+});
 </script>
 
 <template>
@@ -283,8 +338,8 @@ onBeforeUnmount(clearPendingImages);
 
         <SectionCard
             v-if="can('frame.upload')"
-            title="Завантажити зображення"
-            description="Файли обробляються у фоновій черзі. Коли вони зʼявляться в галереї, натисніть «Оновити рамку»."
+            title="Завантажити фото та відео"
+            :description="`Файли обробляються у фоновій черзі. Відео перекодовується під панель — до ${limits.videoSeconds} с і ${limits.videoMegabytes} МБ.`"
         >
             <div class="flex flex-col gap-4">
                 <button
@@ -302,17 +357,17 @@ onBeforeUnmount(clearPendingImages);
                 >
                     <CloudUpload class="text-muted-foreground size-7" />
                     <span class="text-sm font-medium">
-                        Перетягніть зображення або торкніться
+                        Перетягніть фото або відео чи торкніться
                     </span>
                     <span class="text-muted-foreground text-xs">
-                        Можна обрати кілька файлів одразу
+                        JPG, PNG, WEBP, MP4, MOV — можна кілька одразу
                     </span>
                 </button>
 
                 <input
                     ref="fileInput"
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     class="hidden"
                     @change="onFilePicked"
@@ -327,11 +382,25 @@ onBeforeUnmount(clearPendingImages);
                         :key="pending.previewUrl"
                         class="bg-muted relative aspect-[9/16] overflow-hidden rounded-lg"
                     >
+                        <video
+                            v-if="pending.isVideo"
+                            :src="pending.previewUrl"
+                            class="h-full w-full object-cover"
+                            muted
+                            playsinline
+                        />
                         <img
+                            v-else
                             :src="pending.previewUrl"
                             :alt="pending.file.name"
                             class="h-full w-full object-cover"
                         />
+                        <span
+                            v-if="pending.isVideo"
+                            class="bg-background/70 absolute bottom-1 left-1 flex size-6 items-center justify-center rounded-full backdrop-blur-sm"
+                        >
+                            <Play class="size-3 fill-current" />
+                        </span>
                         <button
                             type="button"
                             class="bg-background/80 absolute top-1 right-1 flex size-7 items-center justify-center rounded-full backdrop-blur-sm"
@@ -385,10 +454,12 @@ onBeforeUnmount(clearPendingImages);
             </div>
         </SectionCard>
 
+        <FrameUploadQueue :uploads="uploads" />
+
         <EmptyState
             v-if="gallery.length === 0"
             title="Галерея порожня"
-            description="Завантажте перші зображення, щоб рамка мала що показувати."
+            description="Завантажте перші фото або відео, щоб рамка мала що показувати."
             :icon="ImageOff"
         />
 
@@ -413,6 +484,13 @@ onBeforeUnmount(clearPendingImages);
                     loading="lazy"
                     class="h-full w-full object-cover"
                 />
+                <span
+                    v-if="image.kind === 'video'"
+                    class="bg-background/70 absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-full backdrop-blur-sm"
+                    aria-label="Відео"
+                >
+                    <Play class="size-3.5 fill-current" />
+                </span>
                 <span
                     v-if="isSelecting"
                     class="bg-background/80 absolute top-2 left-2 flex size-9 items-center justify-center rounded-full backdrop-blur-sm"
@@ -441,14 +519,7 @@ onBeforeUnmount(clearPendingImages);
             class="text-muted-foreground text-center text-xs"
         >
             Показано {{ gallery.length }} з
-            {{
-                pluralizeUk(
-                    pagination.total,
-                    'зображення',
-                    'зображення',
-                    'зображень',
-                )
-            }}
+            {{ pluralizeUk(pagination.total, 'файлу', 'файлів', 'файлів') }}
         </p>
     </div>
 
@@ -479,8 +550,8 @@ onBeforeUnmount(clearPendingImages);
     <ConfirmDialog
         v-model:open="isDeleteDialogOpen"
         tone="danger"
-        title="Видалити зображення?"
-        :description="`Буде видалено ${pluralizeUk(selectedNames.length, 'зображення', 'зображення', 'зображень')}. Дію не можна скасувати.`"
+        title="Видалити файли?"
+        :description="`Буде видалено ${pluralizeUk(selectedNames.length, 'файл', 'файли', 'файлів')}. Дію не можна скасувати.`"
         confirm-label="Видалити"
         cancel-label="Скасувати"
         :processing="isDeleting"

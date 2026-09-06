@@ -131,4 +131,7 @@ jobs:
               docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan config:cache'
               docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan event:cache'
               docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan view:cache'
+              # Workers hold the old code in memory; this retires them so systemd
+              # brings one back on the deployed release.
+              docker exec -u www-data ${DEPLOY_CONTAINER} bash -c 'cd ${DEPLOY_PATH} && php artisan queue:restart'
           EOF

@@ -50,6 +50,24 @@ return [
         'host' => env('SMART_FRAME_HOST'),
         'key' => env('SMART_FRAME_KEY'),
         'timeout' => env('SMART_FRAME_TIMEOUT', 15),
+
+        /*
+        | Clips are converted here, on the queue, because the frame decodes H.264
+        | only and cannot re-encode anything itself. The size below is the panel's
+        | own: 1024x600 turned on its side.
+        */
+        'video' => [
+            'driver' => env('SMARTFLAT_FRAME_VIDEO_DRIVER', 'ffmpeg'),
+            'ffmpeg' => env('FFMPEG_BIN', 'ffmpeg'),
+            'ffprobe' => env('FFPROBE_BIN', 'ffprobe'),
+            'width' => env('SMART_FRAME_VIDEO_WIDTH', 600),
+            'height' => env('SMART_FRAME_VIDEO_HEIGHT', 1024),
+            'frame_rate' => env('SMART_FRAME_VIDEO_FPS', 25),
+            'bitrate' => env('SMART_FRAME_VIDEO_BITRATE', '2M'),
+            'max_seconds' => env('SMART_FRAME_VIDEO_MAX_SECONDS', 60),
+            'max_upload_kilobytes' => env('SMART_FRAME_VIDEO_MAX_KILOBYTES', 204800),
+            'timeout' => env('SMART_FRAME_VIDEO_TIMEOUT', 1800),
+        ],
     ],
 
 ];

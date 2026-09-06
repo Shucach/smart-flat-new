@@ -21,7 +21,7 @@ final readonly class FramePage implements Arrayable
     ) {}
 
     /**
-     * @return array{images: array<int, array{name: string, preview: string}>, pagination: array{page: int, perPage: int, lastPage: int, total: int}}
+     * @return array{images: array<int, array{name: string, preview: string, kind: string}>, pagination: array{page: int, perPage: int, lastPage: int, total: int}}
      */
     public function toArray(): array
     {

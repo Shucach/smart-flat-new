@@ -2,6 +2,7 @@
 
 namespace App\Modules\Frame\Services;
 
+use App\Enums\FrameUploadKind;
 use App\Modules\Frame\Contracts\FrameGateway;
 use App\Modules\Frame\Data\FrameImage;
 use App\Modules\Frame\Data\FramePage;
@@ -36,7 +37,11 @@ final class NullFrameGateway implements FrameGateway
         $page = min(max(1, $page), $lastPage);
 
         $images = array_map(
-            static fn (string $name): FrameImage => new FrameImage($name, self::PREVIEW),
+            static fn (string $name): FrameImage => new FrameImage(
+                $name,
+                self::PREVIEW,
+                str_ends_with($name, '.mp4') ? FrameUploadKind::Video : FrameUploadKind::Image,
+            ),
             array_slice($this->names, ($page - 1) * $perPage, $perPage),
         );
 
@@ -49,9 +54,11 @@ final class NullFrameGateway implements FrameGateway
         );
     }
 
-    public function upload(string $absolutePath, string $originalName): void
+    public function upload(string $absolutePath, string $originalName): string
     {
         $this->names[] = $originalName;
+
+        return $originalName;
     }
 
     public function delete(array $names): void

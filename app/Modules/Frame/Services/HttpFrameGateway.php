@@ -2,6 +2,7 @@
 
 namespace App\Modules\Frame\Services;
 
+use App\Enums\FrameUploadKind;
 use App\Modules\Frame\Contracts\FrameGateway;
 use App\Modules\Frame\Data\FrameImage;
 use App\Modules\Frame\Data\FramePage;
@@ -15,6 +16,13 @@ use Illuminate\Support\Facades\Http;
 final readonly class HttpFrameGateway implements FrameGateway
 {
     private const int RESTART_TIMEOUT = 60;
+
+    /**
+     * A clip is megabytes rather than kilobytes, and the frame reads it back with
+     * ffprobe and lifts a poster frame out of it before answering -- on a board
+     * that takes its time. The ordinary timeout is nowhere near enough.
+     */
+    private const int UPLOAD_TIMEOUT = 300;
 
     public function __construct(
         private string $host,
@@ -36,7 +44,11 @@ final readonly class HttpFrameGateway implements FrameGateway
                 continue;
             }
 
-            $images[] = new FrameImage((string) $image['name'], (string) $image['file']);
+            $images[] = new FrameImage(
+                (string) $image['name'],
+                (string) $image['file'],
+                ($image['type'] ?? null) === 'video' ? FrameUploadKind::Video : FrameUploadKind::Image,
+            );
         }
 
         $pagination = is_array($payload['pagination'] ?? null) ? $payload['pagination'] : [];
@@ -52,7 +64,12 @@ final readonly class HttpFrameGateway implements FrameGateway
         );
     }
 
-    public function upload(string $absolutePath, string $originalName): void
+    /**
+     * The frame checks a file before it keeps it -- a clip it could not decode is
+     * refused with a reason rather than stored as a black rectangle -- so the
+     * reply is read for both the stored name and that reason.
+     */
+    public function upload(string $absolutePath, string $originalName): string
     {
         $contents = @file_get_contents($absolutePath);
 
@@ -60,9 +77,26 @@ final readonly class HttpFrameGateway implements FrameGateway
             throw FrameException::unavailable("файл [{$absolutePath}] недоступний");
         }
 
-        $this->send(fn (PendingRequest $request) => $request
-            ->attach('images', $contents, $originalName)
-            ->post($this->endpoint('upload-images')));
+        $data = $this->send(
+            fn (PendingRequest $request) => $request
+                ->attach('images', $contents, $originalName)
+                ->post($this->endpoint('upload-images')),
+            timeout: max($this->timeout, self::UPLOAD_TIMEOUT),
+        );
+
+        $reason = $this->rejectionReason($data);
+
+        if ($reason !== null) {
+            throw FrameException::rejected($reason);
+        }
+
+        $stored = is_array($data['images'] ?? null) ? array_values($data['images']) : [];
+
+        if ($stored === []) {
+            throw FrameException::unavailable('рамка не повернула назву збереженого файлу');
+        }
+
+        return (string) $stored[0];
     }
 
     /**
@@ -137,11 +171,33 @@ final readonly class HttpFrameGateway implements FrameGateway
             throw FrameException::unavailable('несподівана відповідь');
         }
 
+        $data = is_array($body['data'] ?? null) ? $body['data'] : [];
+
         if (($body['success'] ?? false) !== true) {
-            throw FrameException::unavailable((string) ($body['message'] ?? 'невідома помилка'));
+            $reason = $this->rejectionReason($data);
+
+            throw $reason !== null
+                ? FrameException::rejected($reason)
+                : FrameException::unavailable((string) ($body['message'] ?? 'невідома помилка'));
         }
 
-        return is_array($body['data'] ?? null) ? $body['data'] : [];
+        return $data;
+    }
+
+    /**
+     * Returns why the frame refused the file, when it says so.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function rejectionReason(array $data): ?string
+    {
+        foreach (is_array($data['rejected'] ?? null) ? $data['rejected'] : [] as $rejection) {
+            if (is_array($rejection) && isset($rejection['reason'])) {
+                return (string) $rejection['reason'];
+            }
+        }
+
+        return null;
     }
 
     private function endpoint(string $path): string

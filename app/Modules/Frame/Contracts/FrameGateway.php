@@ -13,9 +13,11 @@ interface FrameGateway
     public function list(int $page, int $perPage): FramePage;
 
     /**
+     * Sends one file to the frame and returns the name it was stored under.
+     *
      * @throws FrameException
      */
-    public function upload(string $absolutePath, string $originalName): void;
+    public function upload(string $absolutePath, string $originalName): string;
 
     /**
      * @param  array<int, string>  $names

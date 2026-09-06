@@ -2,7 +2,10 @@
     "mcpServers": {
         "laravel-boost": {
             "command": "/Users/ivh/Library/Application Support/Herd/bin/php83",
-            "args": ["/Users/ivh/Web/example-app/artisan", "boost:mcp"]
+            "args": [
+                "/Users/ivh/Web/example-app/artisan",
+                "boost:mcp"
+            ]
         }
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\FrameUploadKind;
 use App\Modules\Frame\Exceptions\FrameException;
 use App\Modules\Frame\Services\HttpFrameGateway;
 use Illuminate\Http\Client\Request;
@@ -19,7 +20,7 @@ it('lists the images of a page', function () {
             'data' => [
                 'images' => [
                     ['name' => 'one.jpg', 'file' => 'data:image/jpeg;base64,AAA'],
-                    ['name' => 'two.jpg', 'file' => 'data:image/jpeg;base64,BBB'],
+                    ['name' => 'two.mp4', 'file' => 'data:image/jpeg;base64,BBB', 'type' => 'video'],
                 ],
                 'pagination' => ['page' => 2, 'prePage' => 2, 'maxPage' => 2, 'total' => 3],
             ],
@@ -34,7 +35,8 @@ it('lists the images of a page', function () {
         ->and($page->total)->toBe(3)
         ->and($page->images)->toHaveCount(2)
         ->and($page->images[0]->name)->toBe('one.jpg')
-        ->and($page->images[0]->preview)->toBe('data:image/jpeg;base64,AAA');
+        ->and($page->images[0]->preview)->toBe('data:image/jpeg;base64,AAA')
+        ->and($page->images[0]->kind)->toBe(FrameUploadKind::Image);
 
     Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'secret-key')
         && str_contains($request->url(), 'page=2')
@@ -53,20 +55,69 @@ it('sends the image names as a json array when deleting', function () {
         && $request->data() === ['images' => ['one.jpg', 'two.jpg']]);
 });
 
-it('uploads the file contents as a multipart image', function () {
+it('uploads the file contents as multipart and returns the stored name', function () {
     Http::fake([
-        'frame.test/api/v1/upload-images' => Http::response(['success' => true, 'message' => null, 'data' => []]),
+        'frame.test/api/v1/upload-images' => Http::response([
+            'success' => true,
+            'message' => null,
+            'data' => ['images' => ['1788690163183_holiday.jpg'], 'rejected' => []],
+        ]),
     ]);
 
     $path = tempnam(sys_get_temp_dir(), 'frame');
     file_put_contents($path, 'binary-content');
 
-    $this->gateway->upload($path, 'holiday.jpg');
+    expect($this->gateway->upload($path, 'holiday.jpg'))->toBe('1788690163183_holiday.jpg');
 
     Http::assertSent(fn (Request $request) => $request->url() === 'http://frame.test/api/v1/upload-images'
         && $request->isMultipart()
         && $request->data()[0]['name'] === 'images'
         && $request->data()[0]['filename'] === 'holiday.jpg');
+
+    unlink($path);
+});
+
+it('repeats the reason the frame refused a clip', function () {
+    Http::fake([
+        'frame.test/api/v1/upload-images' => Http::response([
+            'success' => false,
+            'message' => 'Images can not be processed',
+            'data' => [
+                'images' => [],
+                'rejected' => [
+                    ['name' => 'IMG_4410.MOV', 'reason' => 'video is HEVC (H.265); the frame only plays H.264'],
+                ],
+            ],
+        ]),
+    ]);
+
+    $path = tempnam(sys_get_temp_dir(), 'frame');
+    file_put_contents($path, 'binary-content');
+
+    expect(fn () => $this->gateway->upload($path, 'IMG_4410.MOV'))
+        ->toThrow(FrameException::class, 'Рамка не прийняла файл: video is HEVC (H.265); the frame only plays H.264');
+
+    unlink($path);
+});
+
+it('marks a refusal as permanent so the queue stops retrying it', function () {
+    Http::fake([
+        'frame.test/api/v1/upload-images' => Http::response([
+            'success' => true,
+            'message' => null,
+            'data' => ['images' => [], 'rejected' => [['name' => 'clip.mp4', 'reason' => 'clip is 400s long']]],
+        ]),
+    ]);
+
+    $path = tempnam(sys_get_temp_dir(), 'frame');
+    file_put_contents($path, 'binary-content');
+
+    try {
+        $this->gateway->upload($path, 'clip.mp4');
+    } catch (FrameException $exception) {
+        expect($exception->permanent)->toBeTrue()
+            ->and($exception->getMessage())->toContain('clip is 400s long');
+    }
 
     unlink($path);
 });

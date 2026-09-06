@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Modules\Frame\Contracts\FrameGateway;
+use App\Modules\Frame\Contracts\VideoTranscoder;
+use App\Modules\Frame\Services\FfmpegVideoTranscoder;
 use App\Modules\Frame\Services\HttpFrameGateway;
 use App\Modules\Frame\Services\NullFrameGateway;
+use App\Modules\Frame\Services\NullVideoTranscoder;
 use App\Modules\Media\Contracts\MediaLibrary;
 use App\Modules\Media\Services\LocalMediaLibrary;
 use App\Modules\System\Contracts\PowerManager;
@@ -56,6 +59,23 @@ class SmartFlatServiceProvider extends ServiceProvider
             }
 
             return new NullFrameGateway;
+        });
+
+        $this->app->singleton(VideoTranscoder::class, function (): VideoTranscoder {
+            if (config('smartflat.frame.video.driver') !== 'ffmpeg') {
+                return new NullVideoTranscoder;
+            }
+
+            return new FfmpegVideoTranscoder(
+                (string) config('smartflat.frame.video.ffmpeg'),
+                (string) config('smartflat.frame.video.ffprobe'),
+                (int) config('smartflat.frame.video.width'),
+                (int) config('smartflat.frame.video.height'),
+                (int) config('smartflat.frame.video.frame_rate'),
+                (string) config('smartflat.frame.video.bitrate'),
+                (int) config('smartflat.frame.video.max_seconds'),
+                (int) config('smartflat.frame.video.timeout'),
+            );
         });
     }
 
