@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { CloudUpload, ImageOff, Trash, X } from '@lucide/vue';
+import { CloudUpload, ImageOff, RefreshCw, Trash, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -175,6 +175,34 @@ function reloadGallery(): void {
     );
 }
 
+/* ----------------------------------------------------------------- restart */
+
+const isRestarting = ref(false);
+
+/**
+ * The panel builds its picture list once, when the player starts, so images
+ * uploaded or deleted here appear on the frame only after this request.
+ */
+function restartSlideshow(): void {
+    if (isRestarting.value) {
+        return;
+    }
+
+    isRestarting.value = true;
+
+    router.post(
+        frame.restart.url(),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => {
+                isRestarting.value = false;
+            },
+        },
+    );
+}
+
 /* --------------------------------------------------------------- selection */
 
 const isSelecting = ref(false);
@@ -228,6 +256,19 @@ onBeforeUnmount(clearPendingImages);
         >
             <template #default>
                 <Button
+                    v-if="can('frame.restart')"
+                    variant="outline"
+                    size="sm"
+                    :disabled="isRestarting"
+                    @click="restartSlideshow"
+                >
+                    <RefreshCw
+                        class="size-4"
+                        :class="{ 'animate-spin': isRestarting }"
+                    />
+                    {{ isRestarting ? 'Оновлення…' : 'Оновити рамку' }}
+                </Button>
+                <Button
                     v-if="can('frame.delete') && gallery.length > 0"
                     variant="outline"
                     size="sm"
@@ -243,7 +284,7 @@ onBeforeUnmount(clearPendingImages);
         <SectionCard
             v-if="can('frame.upload')"
             title="Завантажити зображення"
-            description="Файли обробляються у фоновій черзі — рамка оновиться за кілька хвилин."
+            description="Файли обробляються у фоновій черзі. Коли вони зʼявляться в галереї, натисніть «Оновити рамку»."
         >
             <div class="flex flex-col gap-4">
                 <button

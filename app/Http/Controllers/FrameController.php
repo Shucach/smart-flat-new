@@ -50,6 +50,25 @@ class FrameController extends Controller
         return back();
     }
 
+    /**
+     * The panel keeps showing the picture list it read when its player started,
+     * so uploaded and deleted images reach the screen only after this call.
+     */
+    public function restart(FrameGateway $frame): RedirectResponse
+    {
+        try {
+            $frame->restartSlideshow();
+        } catch (FrameException $exception) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => $exception->getMessage()]);
+
+            return back();
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Показ перезапущено — рамка вже з новими фото.']);
+
+        return back();
+    }
+
     public function destroy(FrameDestroyRequest $request, FrameGateway $frame): RedirectResponse
     {
         try {

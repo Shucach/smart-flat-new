@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Http;
 
 final readonly class HttpFrameGateway implements FrameGateway
 {
+    private const int RESTART_TIMEOUT = 60;
+
     public function __construct(
         private string $host,
         private string $key,
@@ -75,6 +77,20 @@ final readonly class HttpFrameGateway implements FrameGateway
     }
 
     /**
+     * The panel reads its picture list once, when the player starts, so an
+     * upload or a deletion only reaches the screen after this call. The frame
+     * stops the player and retries it up to five times, which takes far longer
+     * than an ordinary request, hence the widened timeout.
+     */
+    public function restartSlideshow(): void
+    {
+        $this->send(
+            fn (PendingRequest $request) => $request->post($this->endpoint('restart-slideshow')),
+            timeout: max($this->timeout, self::RESTART_TIMEOUT),
+        );
+    }
+
+    /**
      * The frame API reports the page count only, so the total is derived from
      * the number of images on the last page when that page is the one loaded.
      *
@@ -97,17 +113,19 @@ final readonly class HttpFrameGateway implements FrameGateway
      * @param  callable(PendingRequest): Response  $callback
      * @return array<string, mixed>
      */
-    private function send(callable $callback): array
+    private function send(callable $callback, ?int $timeout = null): array
     {
         if ($this->host === '' || $this->key === '') {
             throw FrameException::notConfigured();
         }
 
+        $timeout ??= $this->timeout;
+
         try {
             $response = $callback(
                 Http::withHeaders(['Authorization' => $this->key])
-                    ->connectTimeout(min(5, $this->timeout))
-                    ->timeout($this->timeout)
+                    ->connectTimeout(min(5, $timeout))
+                    ->timeout($timeout)
             )->throw();
         } catch (ConnectionException|RequestException $exception) {
             throw FrameException::unavailable($exception->getMessage());

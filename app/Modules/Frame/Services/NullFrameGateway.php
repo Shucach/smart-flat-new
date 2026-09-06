@@ -16,6 +16,8 @@ final class NullFrameGateway implements FrameGateway
     /** @var array<int, string> */
     private array $names;
 
+    private int $restarts = 0;
+
     /**
      * @param  array<int, string>|null  $names
      */
@@ -55,5 +57,15 @@ final class NullFrameGateway implements FrameGateway
     public function delete(array $names): void
     {
         $this->names = array_values(array_diff($this->names, $names));
+    }
+
+    public function restartSlideshow(): void
+    {
+        $this->restarts++;
+    }
+
+    public function restarts(): int
+    {
+        return $this->restarts;
     }
 }

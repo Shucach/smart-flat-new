@@ -9,6 +9,7 @@ enum Permission: string
     case FrameView = 'frame.view';
     case FrameUpload = 'frame.upload';
     case FrameDelete = 'frame.delete';
+    case FrameRestart = 'frame.restart';
     case SystemView = 'system.view';
     case SystemPower = 'system.power';
     case UsersManage = 'users.manage';
@@ -21,6 +22,7 @@ enum Permission: string
             self::FrameView => 'Перегляд рамки',
             self::FrameUpload => 'Завантаження в рамку',
             self::FrameDelete => 'Видалення з рамки',
+            self::FrameRestart => 'Перезапуск показу рамки',
             self::SystemView => 'Перегляд системи',
             self::SystemPower => 'Перезавантаження та вимкнення',
             self::UsersManage => 'Керування користувачами',
@@ -31,7 +33,7 @@ enum Permission: string
     {
         return match ($this) {
             self::MediaView, self::MediaDelete => 'Медіа',
-            self::FrameView, self::FrameUpload, self::FrameDelete => 'Розумна рамка',
+            self::FrameView, self::FrameUpload, self::FrameDelete, self::FrameRestart => 'Розумна рамка',
             self::SystemView, self::SystemPower => 'Система',
             self::UsersManage => 'Адміністрування',
         };

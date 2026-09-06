@@ -71,6 +71,35 @@ it('uploads the file contents as a multipart image', function () {
     unlink($path);
 });
 
+it('posts to the restart endpoint to reload what the panel shows', function () {
+    Http::fake([
+        'frame.test/api/v1/restart-slideshow' => Http::response([
+            'success' => true,
+            'message' => null,
+            'data' => ['active' => true, 'state' => 'active'],
+        ]),
+    ]);
+
+    $this->gateway->restartSlideshow();
+
+    Http::assertSent(fn (Request $request) => $request->url() === 'http://frame.test/api/v1/restart-slideshow'
+        && $request->method() === 'POST'
+        && $request->hasHeader('Authorization', 'secret-key'));
+});
+
+it('throws when the frame reports the slideshow could not be restarted', function () {
+    Http::fake([
+        'frame.test/api/v1/restart-slideshow' => Http::response([
+            'success' => false,
+            'message' => 'slideshowctl: failed to take the console',
+            'data' => [],
+        ]),
+    ]);
+
+    expect(fn () => $this->gateway->restartSlideshow())
+        ->toThrow(FrameException::class, 'slideshowctl: failed to take the console');
+});
+
 it('throws when the frame reports a failure', function () {
     Http::fake([
         'frame.test/api/v1/list-images*' => Http::response([

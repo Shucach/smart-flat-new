@@ -29,6 +29,10 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('can:'.Permission::FrameDelete->value)
         ->name('frame.destroy');
 
+    Route::post('frame/restart', [FrameController::class, 'restart'])
+        ->middleware('can:'.Permission::FrameRestart->value)
+        ->name('frame.restart');
+
     Route::get('system', [SystemController::class, 'index'])
         ->middleware('can:'.Permission::SystemView->value)
         ->name('system.index');

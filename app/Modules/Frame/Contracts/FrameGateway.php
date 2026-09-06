@@ -23,4 +23,11 @@ interface FrameGateway
      * @throws FrameException
      */
     public function delete(array $names): void;
+
+    /**
+     * Reloads the picture list the panel is showing.
+     *
+     * @throws FrameException
+     */
+    public function restartSlideshow(): void;
 }

@@ -14,6 +14,7 @@ test('the permission values are the contract shared with the frontend', function
         'frame.view',
         'frame.upload',
         'frame.delete',
+        'frame.restart',
         'system.view',
         'system.power',
         'users.manage',

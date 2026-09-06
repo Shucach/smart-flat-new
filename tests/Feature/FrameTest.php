@@ -132,6 +132,48 @@ describe('destroy', function () {
     });
 });
 
+describe('restart', function () {
+    it('restarts the slideshow so the frame picks up the new images', function () {
+        $gateway = new NullFrameGateway(['a.jpg']);
+        $this->app->instance(FrameGateway::class, $gateway);
+
+        $this->actingAs(userWithPermissions(Permission::FrameView, Permission::FrameRestart))
+            ->from(route('frame.index'))
+            ->post(route('frame.restart'))
+            ->assertRedirect(route('frame.index'))
+            ->assertSessionHas(SessionKey::FLASH_DATA, [
+                'toast' => ['type' => 'success', 'message' => 'Показ перезапущено — рамка вже з новими фото.'],
+            ]);
+
+        expect($gateway->restarts())->toBe(1);
+    });
+
+    it('flashes the reason when the frame refuses to restart', function () {
+        $gateway = Mockery::mock(FrameGateway::class);
+        $gateway->shouldReceive('restartSlideshow')->once()->andThrow(FrameException::unavailable('slideshow is down'));
+        $this->app->instance(FrameGateway::class, $gateway);
+
+        $this->actingAs(userWithPermissions(Permission::FrameView, Permission::FrameRestart))
+            ->from(route('frame.index'))
+            ->post(route('frame.restart'))
+            ->assertRedirect(route('frame.index'))
+            ->assertSessionHas(SessionKey::FLASH_DATA, [
+                'toast' => ['type' => 'error', 'message' => 'Розумна рамка недоступна: slideshow is down'],
+            ]);
+    });
+
+    it('returns 403 for a user without the frame.restart permission', function () {
+        $gateway = new NullFrameGateway(['a.jpg']);
+        $this->app->instance(FrameGateway::class, $gateway);
+
+        $this->actingAs(userWithPermissions(Permission::FrameView, Permission::FrameUpload))
+            ->post(route('frame.restart'))
+            ->assertForbidden();
+
+        expect($gateway->restarts())->toBe(0);
+    });
+});
+
 it('deletes the temporary file after the upload job succeeds', function () {
     Storage::fake('local');
     $gateway = new NullFrameGateway([]);
