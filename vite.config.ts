@@ -69,6 +69,13 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            // Agent tooling writes these in its own format, so leaving them to
+            // the formatter means every recorded rule breaks CI.
+            '.agents/**',
+            '.ai/**',
+            '.claude/**',
+            '.cursor/**',
+            '.junie/**',
             'old_code/**',
             'composer.json',
             'resources/js/components/ui/*',
