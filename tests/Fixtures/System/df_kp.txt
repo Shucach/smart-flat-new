@@ -1,0 +1,6 @@
+Filesystem     1024-blocks      Used Available Capacity Mounted on
+/dev/root         30298176  12119270  17130906      42% /
+devtmpfs           1878588         0   1878588       0% /dev
+tmpfs              2044352         0   2044352       0% /dev/shm
+/dev/sda1           258095     31456    226639      13% /boot/firmware
+/dev/sdb3       1922728840 1345910188 478903360      74% /media/nfs data

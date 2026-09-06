@@ -1,0 +1,87 @@
+name: Build and deploy
+
+on:
+    push:
+        branches: ['master']
+#  pull_request:
+#    branches: [ "master" ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [18.x]
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+            - name: Install Packages
+              run: composer install --no-dev
+
+            - name: Install dependencies for Vue 3
+              working-directory: ./flat
+              run: npm install
+
+            - name: Build Vue 3
+              working-directory: ./flat
+              run: npm run build
+
+            - name: Install cloudflared
+              run: |
+                  curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+                  chmod +x cloudflared-linux-amd64
+                  sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+
+            - name: Write SSH private key
+              run: |
+                  cat << 'EOF' > key.pem
+                  ${{ secrets.SSH_PRIVATE_KEY }}
+                  EOF
+                  chmod 600 key.pem
+
+            - name: SCRIPT_BEFORE
+              run: |
+                  ssh -i key.pem \
+                    -o "ProxyCommand=cloudflared access ssh --hostname=hss.vanzzo.net" \
+                    -o StrictHostKeyChecking=no \
+                    ${{ secrets.REMOTE_USER }}@hss.vanzzo.net \
+                    "sudo chown -R pi:pi ${{ secrets.REMOTE_TARGET }}"
+
+            - name: Deploy via rsync over Cloudflare Tunnel
+              run: |
+                  export RSYNC_RSH='ssh -i key.pem -o "ProxyCommand=cloudflared access ssh --hostname=hss.vanzzo.net" -o StrictHostKeyChecking=no'
+
+                  rsync -az --delete \
+                    --no-owner --no-group --no-perms \
+                    --exclude '/flat/node_modules/' \
+                    --exclude '/.github' \
+                    --exclude '/.git' \
+                    --exclude '/.gitattributes' \
+                    --exclude '/.env' \
+                    --exclude '/storage/' \
+                    ./ \
+                    ${{ secrets.REMOTE_USER }}@hss.vanzzo.net:${{ secrets.REMOTE_TARGET }}
+
+            - name: SCRIPT_AFTER
+              run: |
+                  ssh -i key.pem \
+                    -o "ProxyCommand=cloudflared access ssh --hostname=hss.vanzzo.net" \
+                    -o StrictHostKeyChecking=no \
+                    ${{ secrets.REMOTE_USER }}@hss.vanzzo.net <<EOF
+                      sudo chown -R www-data:www-data ${{ secrets.REMOTE_TARGET }}
+                      docker exec -i ubuntu_22_php83_apache2 bash -c 'cd ${{ secrets.REMOTE_TARGET }} && php artisan migrate --force'
+                      docker exec -i ubuntu_22_php83_apache2 bash -c 'cd ${{ secrets.REMOTE_TARGET }} && php artisan cache:clear'
+                      docker exec -i ubuntu_22_php83_apache2 bash -c 'cd ${{ secrets.REMOTE_TARGET }} && php artisan route:clear'
+                      docker exec -i ubuntu_22_php83_apache2 bash -c 'cd ${{ secrets.REMOTE_TARGET }} && php artisan config:clear'
+                  EOF

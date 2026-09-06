@@ -1,0 +1,38 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Redirect all to Vue
+    RewriteRule ^front/index\.html$ - [L]
+    # ignoring all api requests
+    #RewriteCond %{REQUEST_URI} !^/admin [NC]
+    RewriteCond %{REQUEST_URI} !^/api [NC]
+    RewriteCond %{REQUEST_URI} !^/tg [NC]
+    RewriteCond %{REQUEST_URI} !^/telegram [NC]
+    RewriteCond %{REQUEST_URI} !^/adminer_0ffcf3e268c0dc5cd7a33160686ce43d.php [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /front/index.html [L]
+
+
+    # Redirect all to Vue
+#    RewriteCond %{REQUEST_URI} ^/front/(.*)
+#    Rewriterule ^(.*)$ front/ [L]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

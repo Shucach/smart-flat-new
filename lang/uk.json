@@ -1,0 +1,18 @@
+{
+    "Profile updated.": "Профіль оновлено.",
+    "Password updated.": "Пароль оновлено.",
+    "The provided password was incorrect.": "Неправильний пароль.",
+    "The provided two factor authentication code was invalid.": "Неправильний код двоетапної перевірки.",
+    "The provided two factor recovery code was invalid.": "Неправильний код відновлення.",
+    "Invalid credential format.": "Некоректний формат ключа доступу.",
+    "Passkey registration session expired. Please try again.": "Час на додавання ключа доступу вичерпано. Спробуйте ще раз.",
+    "Passkey verification session expired. Please try again.": "Час на перевірку ключа доступу вичерпано. Спробуйте ще раз.",
+    "The :attribute must be at least :length characters.": "Поле :attribute має містити щонайменше :length символів.",
+    "The :attribute must be at least :length characters and contain at least one number.": "Поле :attribute має містити щонайменше :length символів і хоча б одну цифру.",
+    "The :attribute must be at least :length characters and contain at least one special character.": "Поле :attribute має містити щонайменше :length символів і хоча б один спеціальний символ.",
+    "The :attribute must be at least :length characters and contain at least one special character and one number.": "Поле :attribute має містити щонайменше :length символів, хоча б один спеціальний символ і хоча б одну цифру.",
+    "The :attribute must be at least :length characters and contain at least one uppercase character.": "Поле :attribute має містити щонайменше :length символів і хоча б одну велику літеру.",
+    "The :attribute must be at least :length characters and contain at least one uppercase character and one number.": "Поле :attribute має містити щонайменше :length символів, хоча б одну велику літеру і хоча б одну цифру.",
+    "The :attribute must be at least :length characters and contain at least one uppercase character and one special character.": "Поле :attribute має містити щонайменше :length символів, хоча б одну велику літеру і хоча б один спеціальний символ.",
+    "The :attribute must be at least :length characters and contain at least one uppercase character, one number, and one special character.": "Поле :attribute має містити щонайменше :length символів, хоча б одну велику літеру, хоча б одну цифру і хоча б один спеціальний символ."
+}
