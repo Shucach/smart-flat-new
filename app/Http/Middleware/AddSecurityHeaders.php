@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class AddSecurityHeaders
+{
+    /**
+     * The headers added to every web response.
+     *
+     * The panel can delete media and power the host off, so it must never be
+     * framed. Strict-Transport-Security is left to Cloudflare, which already
+     * sends it on every response.
+     *
+     * @var array<string, string>
+     */
+    private const HEADERS = [
+        'Content-Security-Policy' => "frame-ancestors 'none'",
+        'X-Frame-Options' => 'DENY',
+        'X-Content-Type-Options' => 'nosniff',
+        'Referrer-Policy' => 'strict-origin-when-cross-origin',
+    ];
+
+    /**
+     * Handle an incoming request.
+     *
+     * @param  Closure(Request): (Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $response = $next($request);
+
+        foreach (self::HEADERS as $header => $value) {
+            if (! $response->headers->has($header)) {
+                $response->headers->set($header, $value);
+            }
+        }
+
+        return $response;
+    }
+}

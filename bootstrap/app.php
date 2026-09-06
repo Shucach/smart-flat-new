@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -18,11 +19,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // Production sits behind a Cloudflare tunnel that terminates TLS and talks
         // plain HTTP to Apache, so the forwarded headers are the only way the app
         // learns the request was https and keeps generating https URLs.
-        $middleware->trustProxies(at: '*');
+        //
+        // Only the tunnel's own docker network is trusted. Apache also answers on
+        // the LAN, and trusting every peer would let anyone there forge the client
+        // IP that the login throttle counts, turning five attempts a minute into
+        // unlimited ones. The value is hard-coded because this callback runs before
+        // the configuration is loaded, so env() and config() are both empty here.
+        $middleware->trustProxies(at: ['172.18.0.0/16']);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            AddSecurityHeaders::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
