@@ -6,6 +6,11 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FrameController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\TorrentActionController;
+use App\Http\Controllers\TorrentController;
+use App\Http\Controllers\TorrentFileController;
+use App\Http\Controllers\TorrentLimitController;
+use App\Http\Controllers\TorrentSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -32,6 +37,36 @@ Route::middleware('auth')->group(function (): void {
     Route::post('frame/restart', [FrameController::class, 'restart'])
         ->middleware('can:'.Permission::FrameRestart->value)
         ->name('frame.restart');
+
+    Route::get('torrents', [TorrentController::class, 'index'])
+        ->middleware('can:'.Permission::TorrentView->value)
+        ->name('torrents.index');
+
+    Route::post('torrents', [TorrentController::class, 'store'])
+        ->middleware('can:'.Permission::TorrentAdd->value)
+        ->name('torrents.store');
+
+    Route::delete('torrents', [TorrentController::class, 'destroy'])
+        ->middleware('can:'.Permission::TorrentDelete->value)
+        ->name('torrents.destroy');
+
+    Route::middleware('can:'.Permission::TorrentManage->value)->group(function (): void {
+        Route::post('torrents/action', TorrentActionController::class)->name('torrents.action');
+
+        Route::put('torrents/settings', [TorrentSessionController::class, 'update'])
+            ->name('torrents.settings.update');
+
+        Route::post('torrents/port-test', [TorrentSessionController::class, 'testPort'])
+            ->name('torrents.port-test');
+
+        Route::put('torrents/{torrent}/files', [TorrentFileController::class, 'update'])
+            ->whereNumber('torrent')
+            ->name('torrents.files.update');
+
+        Route::put('torrents/{torrent}/limits', [TorrentLimitController::class, 'update'])
+            ->whereNumber('torrent')
+            ->name('torrents.limits.update');
+    });
 
     Route::get('system', [SystemController::class, 'index'])
         ->middleware('can:'.Permission::SystemView->value)

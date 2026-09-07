@@ -21,7 +21,7 @@ describe('index', function () {
                 ->where('roles.1.label', 'Гість')
                 ->where('roles.1.permissions', ['media.view'])
                 ->where('roles.1.usersCount', 1)
-                ->has('permissionGroups', 4)
+                ->has('permissionGroups', 5)
                 ->where('permissionGroups.0', [
                     'group' => 'Медіа',
                     'items' => [

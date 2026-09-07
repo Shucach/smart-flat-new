@@ -1,4 +1,11 @@
-import { FolderOpen, Images, LayoutGrid, ShieldUser, Cpu } from '@lucide/vue';
+import {
+    ArrowDownToLine,
+    Cpu,
+    FolderOpen,
+    Images,
+    LayoutGrid,
+    ShieldUser,
+} from '@lucide/vue';
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 import { usePermissions } from '@/composables/usePermissions';
@@ -7,6 +14,7 @@ import adminUsers from '@/routes/admin/users';
 import frame from '@/routes/frame';
 import media from '@/routes/media';
 import system from '@/routes/system';
+import torrents from '@/routes/torrents';
 import type { NavItem } from '@/types';
 
 export type AppNavItem = NavItem & {
@@ -43,6 +51,15 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Медіа',
                 href: media.index(),
                 icon: FolderOpen,
+            });
+        }
+
+        if (can('torrent.view')) {
+            items.push({
+                title: 'Торенти',
+                shortTitle: 'Торенти',
+                href: torrents.index(),
+                icon: ArrowDownToLine,
             });
         }
 

@@ -25,6 +25,9 @@ use App\Modules\System\Support\ProcMeminfoParser;
 use App\Modules\System\Support\ProcStatParser;
 use App\Modules\System\Support\PsCpuParser;
 use App\Modules\System\Support\VmStatParser;
+use App\Modules\Torrent\Contracts\TorrentClient;
+use App\Modules\Torrent\Services\NullTorrentClient;
+use App\Modules\Torrent\Services\TransmissionTorrentClient;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
@@ -37,6 +40,7 @@ class SmartFlatServiceProvider extends ServiceProvider
         $this->registerMedia();
         $this->registerFrame();
         $this->registerSystem();
+        $this->registerTorrent();
     }
 
     private function registerMedia(): void
@@ -76,6 +80,22 @@ class SmartFlatServiceProvider extends ServiceProvider
                 (string) config('smartflat.frame.video.bitrate'),
                 (int) config('smartflat.frame.video.max_seconds'),
                 (int) config('smartflat.frame.video.timeout'),
+            );
+        });
+    }
+
+    private function registerTorrent(): void
+    {
+        $this->app->singleton(TorrentClient::class, function (): TorrentClient {
+            if (config('smartflat.torrent.driver') !== 'transmission') {
+                return new NullTorrentClient;
+            }
+
+            return new TransmissionTorrentClient(
+                (string) config('smartflat.torrent.url'),
+                (string) config('smartflat.torrent.username'),
+                (string) config('smartflat.torrent.password'),
+                (int) config('smartflat.torrent.timeout', 10),
             );
         });
     }

@@ -28,6 +28,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     Permission::MediaView->value,
                     Permission::FrameView->value,
+                    Permission::TorrentView->value,
                     Permission::SystemView->value,
                 ],
             ],

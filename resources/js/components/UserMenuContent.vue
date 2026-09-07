@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from '@lucide/vue';
+import { LogOut, Settings, ShieldUser } from '@lucide/vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -8,7 +8,9 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
+import { usePermissions } from '@/composables/usePermissions';
 import { logout } from '@/routes';
+import adminUsers from '@/routes/admin/users';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -21,6 +23,12 @@ const handleLogout = () => {
 };
 
 defineProps<Props>();
+
+/**
+ * The bottom bar shows five destinations at most, which is one short of the
+ * full section list, so administration is reachable from here on a phone.
+ */
+const { can } = usePermissions();
 </script>
 
 <template>
@@ -31,6 +39,15 @@ defineProps<Props>();
     </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
+        <DropdownMenuItem v-if="can('users.manage')" :as-child="true">
+            <Link
+                class="flex min-h-11 w-full cursor-pointer items-center sm:min-h-9"
+                :href="adminUsers.index()"
+            >
+                <ShieldUser class="mr-2 h-4 w-4" />
+                Адміністрування
+            </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link
                 class="flex min-h-11 w-full cursor-pointer items-center sm:min-h-9"

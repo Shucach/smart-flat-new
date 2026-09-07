@@ -43,6 +43,21 @@ export function formatBytes(bytes: number | null | undefined): string {
 }
 
 /**
+ * Formats a transfer rate, e.g. «1,4 МБ/с».
+ */
+export function formatSpeed(bytesPerSecond: number | null | undefined): string {
+    if (
+        bytesPerSecond === null ||
+        bytesPerSecond === undefined ||
+        !Number.isFinite(bytesPerSecond)
+    ) {
+        return '—';
+    }
+
+    return `${formatBytes(bytesPerSecond)}/с`;
+}
+
+/**
  * Renders "використано з усього" for a disk or memory pair.
  */
 export function formatBytesRatio(used: number, total: number): string {

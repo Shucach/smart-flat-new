@@ -43,6 +43,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Torrents
+    |--------------------------------------------------------------------------
+    |
+    | Transmission is driven through its JSON-RPC endpoint. The credentials are
+    | the ones the daemon was started with -- the linuxserver image turns
+    | authentication on as soon as it is given a user and a password.
+    |
+    | `max_file_kilobytes` caps an uploaded .torrent file; the metainfo travels
+    | to the daemon base64 encoded, so it is held in memory while it does.
+    |
+    */
+
+    'torrent' => [
+        'driver' => env('SMARTFLAT_TORRENT_DRIVER', 'transmission'),
+        'url' => env('TRANSMISSION_RPC_URL', 'http://127.0.0.1:9091/transmission/rpc'),
+        'username' => env('TRANSMISSION_RPC_USERNAME', ''),
+        'password' => env('TRANSMISSION_RPC_PASSWORD', ''),
+        'timeout' => env('TRANSMISSION_RPC_TIMEOUT', 10),
+        'max_file_kilobytes' => env('TRANSMISSION_MAX_TORRENT_KILOBYTES', 5120),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smart Frame
     |--------------------------------------------------------------------------
     |
