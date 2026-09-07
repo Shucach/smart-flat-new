@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePoll } from '@inertiajs/vue3';
 import { ChevronRight, Clock, Cpu, HardDrive, MemoryStick } from '@lucide/vue';
 import { computed } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -11,6 +11,7 @@ import {
     formatBytesRatio,
     formatDuration,
     formatPercent,
+    formatTime,
     pluralizeUk,
 } from '@/lib/format';
 import { dashboard } from '@/routes';
@@ -47,6 +48,16 @@ defineOptions({
 
 const { can } = usePermissions();
 const { mainNavItems } = useAppNavigation();
+
+/**
+ * Only the snapshot is refreshed: the counters behind it cost an HTTP call to
+ * the frame and a directory listing, and none of them move minute to minute.
+ */
+const { polling } = usePoll(
+    3000,
+    { only: ['snapshot'] },
+    { autoStart: props.snapshot !== null },
+);
 
 const quickLinks = computed(() =>
     mainNavItems.value.filter((item) => item.shortTitle !== 'Дашборд'),
@@ -111,7 +122,22 @@ function usageTone(percent: number): ChartTone {
         <PageHeader
             title="SmartFlat"
             description="Коротке зведення по квартирі"
-        />
+        >
+            <span
+                v-if="snapshot"
+                class="text-muted-foreground flex items-center gap-2 text-xs"
+            >
+                <span
+                    class="size-2 rounded-full"
+                    :class="
+                        polling
+                            ? 'bg-ok animate-pulse'
+                            : 'bg-muted-foreground/50'
+                    "
+                />
+                Оновлено {{ formatTime(snapshot.capturedAt) }}
+            </span>
+        </PageHeader>
 
         <div
             v-if="snapshot && can('system.view')"

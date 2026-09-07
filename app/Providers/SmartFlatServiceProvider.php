@@ -17,6 +17,7 @@ use App\Modules\System\Services\DarwinSystemMetrics;
 use App\Modules\System\Services\LinuxSystemMetrics;
 use App\Modules\System\Services\NullPowerManager;
 use App\Modules\System\Services\NullSystemMetrics;
+use App\Modules\System\Services\RequestFilePowerManager;
 use App\Modules\System\Services\ShellPowerManager;
 use App\Modules\System\Support\CommandRunner;
 use App\Modules\System\Support\DfParser;
@@ -86,15 +87,15 @@ class SmartFlatServiceProvider extends ServiceProvider
             Cache::store(),
         ));
 
-        $this->app->singleton(PowerManager::class, function (): PowerManager {
-            if (config('smartflat.system.power_driver') !== 'shell') {
-                return new NullPowerManager;
-            }
-
-            return new ShellPowerManager([
+        $this->app->singleton(PowerManager::class, fn (): PowerManager => match ((string) config('smartflat.system.power_driver')) {
+            'shell' => new ShellPowerManager([
                 'reboot' => (string) config('smartflat.system.reboot_command'),
                 'shutdown' => (string) config('smartflat.system.shutdown_command'),
-            ]);
+            ]),
+            'request-file' => new RequestFilePowerManager(
+                (string) config('smartflat.system.power_request_path'),
+            ),
+            default => new NullPowerManager,
         });
     }
 

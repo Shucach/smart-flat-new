@@ -1,0 +1,8 @@
+Filesystem                 1024-blocks       Used Available Capacity Mounted on
+overlay                       61035844   35622784  22294028      62% /
+tmpfs                            65536          0     65536       0% /dev
+shm                              65536          0     65536       0% /dev/shm
+192.168.0.39:/export/media  1921724928 1027088640 894619904      54% /media/nfs
+/dev/mmcblk0p2                61035844   35622784  22294028      62% /etc/hosts
+192.168.0.39:/export/cloud   960301312  113008640 798438144      13% /media/cloud/cloud
+tmpfs                                4          0         4       0% /proc/asound

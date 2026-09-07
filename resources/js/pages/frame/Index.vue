@@ -191,6 +191,11 @@ const hasMorePages = computed(
 /**
  * Pages are accumulated on the client: each "load more" is a partial visit
  * that swaps `images` for the next page, and the watcher above appends them.
+ *
+ * The page number is then wiped from the address bar. It is a position within
+ * one visit, not a place to come back to: left in the URL, a reload would drop
+ * somebody into page four with the three before it missing, and no way back to
+ * the top of the gallery but editing the address by hand.
  */
 function loadMore(): void {
     if (isLoadingMore.value || !hasMorePages.value) {
@@ -207,6 +212,13 @@ function loadMore(): void {
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            onSuccess: () => {
+                router.replace({
+                    url: frame.index.url(),
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            },
             onFinish: () => {
                 isLoadingMore.value = false;
             },

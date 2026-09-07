@@ -97,11 +97,12 @@ const percentText = computed(() =>
             />
         </div>
 
-        <p
-            v-if="valueText || sublabel"
-            class="text-muted-foreground text-xs tabular-nums"
-        >
-            {{ valueText ?? sublabel }}
+        <p v-if="valueText" class="text-muted-foreground text-xs tabular-nums">
+            {{ valueText }}
+        </p>
+
+        <p v-if="sublabel" class="text-muted-foreground truncate text-xs">
+            {{ sublabel }}
         </p>
     </div>
 </template>

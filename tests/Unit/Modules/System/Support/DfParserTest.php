@@ -36,3 +36,41 @@ it('skips pseudo filesystems that are not backed by a device', function () {
         ->not->toContain('tmpfs')
         ->not->toContain('devtmpfs');
 });
+
+describe('inside the container the app is deployed to', function () {
+    $parse = fn (array $labels = []): array => (new DfParser)->parse(
+        file_get_contents(__DIR__.'/../../../../Fixtures/System/df_kp_container.txt'),
+        $labels,
+    );
+
+    it('keeps the NFS shares the media library lives on', function () use ($parse) {
+        $disks = $parse();
+
+        expect(array_map(fn ($disk) => $disk->mountPoint, $disks))
+            ->toBe(['/', '/media/nfs', '/media/cloud/cloud']);
+    });
+
+    it('reads the size of an NFS share', function () use ($parse) {
+        $media = $parse()[1];
+
+        expect($media->device)->toBe('192.168.0.39:/export/media')
+            ->and($media->totalBytes)->toBe(1_967_846_326_272)
+            ->and($media->usedBytes)->toBe(1_051_738_767_360)
+            ->and($media->freeBytes)->toBe(916_090_781_696)
+            ->and(round($media->usagePercent(), 1))->toBe(53.4);
+    });
+
+    it('keeps the overlay root the container runs on', function () use ($parse) {
+        expect($parse()[0]->device)->toBe('overlay');
+    });
+
+    it('drops the single files docker binds off the host disk', function () use ($parse) {
+        expect(array_map(fn ($disk) => $disk->mountPoint, $parse()))
+            ->not->toContain('/etc/hosts')
+            ->not->toContain('/proc/asound');
+    });
+
+    it('labels an NFS share by its device', function () use ($parse) {
+        expect($parse(['192.168.0.39:/export/media' => 'Медіа'])[1]->label)->toBe('Медіа');
+    });
+});

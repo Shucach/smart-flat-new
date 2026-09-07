@@ -30,7 +30,7 @@ import {
     pluralizeUk,
 } from '@/lib/format';
 import system from '@/routes/system';
-import type { ChartTone, SystemSnapshot } from '@/types';
+import type { ChartTone, DiskUsage, SystemSnapshot } from '@/types';
 
 const props = defineProps<{
     snapshot: SystemSnapshot;
@@ -100,6 +100,24 @@ const temperatureTone = computed<ChartTone>(() => {
 });
 
 const hasSwap = computed(() => props.snapshot.memory.swapTotalBytes > 0);
+
+/**
+ * A network share is worth naming by where it comes from, since the mount point
+ * alone says nothing about which machine is serving it. A local partition is
+ * already described by its mount point.
+ */
+function diskSource(disk: DiskUsage): string | undefined {
+    const isNetworkShare =
+        disk.device.includes(':/') || disk.device.startsWith('//');
+
+    if (!isNetworkShare) {
+        return undefined;
+    }
+
+    return disk.label === disk.mountPoint
+        ? disk.device
+        : `${disk.device} → ${disk.mountPoint}`;
+}
 
 /* ------------------------------------------------------------------- power */
 
@@ -301,6 +319,7 @@ function confirmPowerAction(): void {
                     :value-text="
                         formatBytesRatio(disk.usedBytes, disk.totalBytes)
                     "
+                    :sublabel="diskSource(disk)"
                     :thresholds="{ warn: 80, danger: 92 }"
                 />
                 <p

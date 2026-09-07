@@ -25,6 +25,11 @@ return [
     | Metrics are read from the host the application runs on. The power driver
     | performs reboot and shutdown of that very same host.
     |
+    | `shell` runs the commands below and only works where the application owns
+    | the machine. Production runs in a container, which cannot power the board
+    | off however it is configured, so it uses `request-file`: the request is
+    | written to a directory the host watches, and a unit there does the work.
+    |
     */
 
     'system' => [
@@ -32,6 +37,7 @@ return [
         'power_driver' => env('SMARTFLAT_POWER_DRIVER', 'null'),
         'reboot_command' => env('SMARTFLAT_REBOOT_COMMAND', '/usr/bin/sudo /sbin/reboot'),
         'shutdown_command' => env('SMARTFLAT_SHUTDOWN_COMMAND', '/usr/bin/sudo /sbin/shutdown -h now'),
+        'power_request_path' => env('SMARTFLAT_POWER_REQUEST_PATH', storage_path('app/power')),
         'disk_labels' => [],
     ],
 
