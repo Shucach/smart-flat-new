@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  DEPLOY_USER: ${{ vars.DEPLOY_USER || 'pi' }}
+  DEPLOY_USER: ${{ vars.DEPLOY_USER || 'deploy' }}
   DEPLOY_HOST: ${{ vars.DEPLOY_HOST || 'hss.vanzzo.net' }}
   DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/var/www/sf.vanzzo.net/code' }}
   DEPLOY_CONTAINER: ${{ vars.DEPLOY_CONTAINER || 'ubuntu_22_php83_apache2' }}
