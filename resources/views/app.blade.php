@@ -6,7 +6,7 @@
         <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
         <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
         <meta name="googlebot-news" content="noindex, nofollow">
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#f6f7fc" media="(prefers-color-scheme: light)">
         <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
@@ -27,7 +27,7 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #f6f7fc;
             }
 
             html.dark {

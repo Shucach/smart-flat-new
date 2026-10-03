@@ -74,7 +74,7 @@ const trendClasses = computed(
         :href="href"
         :class="
             cn(
-                'bg-card text-card-foreground flex min-h-[7rem] flex-col justify-between gap-3 rounded-xl border p-4 transition-colors',
+                'bg-card text-card-foreground shadow-card flex min-h-[7rem] flex-col justify-between gap-3 rounded-xl border p-4 transition-colors',
                 href &&
                     'hover:bg-accent/50 active:bg-accent focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                 props.class,

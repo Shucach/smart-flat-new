@@ -26,7 +26,7 @@ defineProps<{
                 class="flex items-center gap-2 self-center font-medium"
             >
                 <div class="flex h-9 w-9 items-center justify-center">
-                    <AppLogoIcon class="text-foreground size-9" />
+                    <AppLogoIcon class="text-primary size-9" />
                 </div>
             </Link>
 

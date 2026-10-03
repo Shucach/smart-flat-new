@@ -22,6 +22,8 @@ export type AppNavItem = NavItem & {
     shortTitle: string;
     /** Path prefix that keeps the item highlighted across a whole section. */
     activeMatch?: string;
+    /** Text colour that gives each section its own hue (icons, badges). */
+    colorClass: string;
 };
 
 export type UseAppNavigationReturn = {
@@ -42,6 +44,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Дашборд',
                 href: dashboard(),
                 icon: LayoutGrid,
+                colorClass: 'text-primary',
             },
         ];
 
@@ -51,6 +54,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Медіа',
                 href: media.index(),
                 icon: FolderOpen,
+                colorClass: 'text-chart-1',
             });
         }
 
@@ -60,6 +64,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Торенти',
                 href: torrents.index(),
                 icon: ArrowDownToLine,
+                colorClass: 'text-chart-2',
             });
         }
 
@@ -69,6 +74,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Рамка',
                 href: frame.index(),
                 icon: Images,
+                colorClass: 'text-chart-3',
             });
         }
 
@@ -78,6 +84,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Система',
                 href: system.index(),
                 icon: Cpu,
+                colorClass: 'text-chart-4',
             });
         }
 
@@ -87,6 +94,7 @@ export function useAppNavigation(): UseAppNavigationReturn {
                 shortTitle: 'Адмін',
                 href: adminUsers.index(),
                 icon: ShieldUser,
+                colorClass: 'text-chart-5',
                 activeMatch: '/admin',
             });
         }

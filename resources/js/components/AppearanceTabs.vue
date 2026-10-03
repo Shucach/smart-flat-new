@@ -26,7 +26,7 @@ const tabs = [
             :class="[
                 'flex min-h-11 items-center rounded-md px-3.5 py-1.5 transition-colors sm:min-h-9',
                 appearance === value
-                    ? 'bg-background text-foreground shadow-xs'
+                    ? 'bg-card text-foreground shadow-xs'
                     : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
             ]"
         >

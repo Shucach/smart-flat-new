@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import AppearanceToggle from '@/components/AppearanceToggle.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -47,12 +48,14 @@ const sectionTitle = computed(
             {{ sectionTitle }}
         </span>
 
+        <AppearanceToggle class="ml-auto" />
+
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
                 <Button
                     variant="ghost"
                     size="icon"
-                    class="ml-auto size-10 rounded-full md:hidden"
+                    class="size-10 rounded-full md:hidden"
                     aria-label="Меню користувача"
                 >
                     <Avatar class="size-8 overflow-hidden rounded-full">
@@ -62,7 +65,7 @@ const sectionTitle = computed(
                             :alt="user.name"
                         />
                         <AvatarFallback
-                            class="rounded-full bg-neutral-200 text-xs font-semibold text-black dark:bg-neutral-700 dark:text-white"
+                            class="bg-primary/12 text-primary rounded-full text-xs font-semibold dark:bg-neutral-700 dark:text-white"
                         >
                             {{ getInitials(user.name) }}
                         </AvatarFallback>

@@ -17,6 +17,8 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
 
+    --shadow-card: var(--card-shadow);
+
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 
@@ -111,61 +113,69 @@
 }
 
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
+    /*
+      Light theme: a soft lavender-tinted canvas with white cards and an
+      indigo-violet primary, so the interface keeps a gentle hint of colour
+      instead of plain greys.
+    */
+    --background: hsl(230 45% 97.6%);
+    --foreground: hsl(236 32% 17%);
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
+    --card-foreground: hsl(236 32% 17%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
+    --popover-foreground: hsl(236 32% 17%);
+    --primary: hsl(246 70% 60%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(242 60% 95%);
+    --secondary-foreground: hsl(246 45% 34%);
+    --muted: hsl(232 40% 95%);
+    --muted-foreground: hsl(234 14% 46%);
+    --accent: hsl(244 80% 96.5%);
+    --accent-foreground: hsl(246 50% 36%);
+    --destructive: hsl(354 70% 54%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(232 32% 91%);
+    --input: hsl(232 28% 87%);
+    --ring: hsl(246 70% 60%);
+    --chart-1: hsl(199 84% 47%);
+    --chart-2: hsl(163 64% 37%);
+    --chart-3: hsl(338 72% 57%);
+    --chart-4: hsl(30 90% 52%);
+    --chart-5: hsl(262 66% 60%);
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --card-shadow:
+        0 1px 2px hsl(236 40% 30% / 0.04),
+        0 4px 16px -6px hsl(246 50% 40% / 0.1);
+    --sidebar-background: hsl(236 48% 95%);
+    --sidebar-foreground: hsl(236 24% 30%);
+    --sidebar-primary: hsl(246 70% 60%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(244 70% 90.5%);
+    --sidebar-accent-foreground: hsl(246 55% 38%);
+    --sidebar-border: hsl(234 34% 89%);
+    --sidebar-ring: hsl(246 70% 60%);
+    --sidebar: hsl(236 48% 95%);
 
-    --ok: hsl(142 71.8% 29.2%);
+    --ok: hsl(156 64% 31%);
     --ok-foreground: hsl(0 0% 100%);
-    --ok-soft: hsl(148 48.1% 94.7%);
+    --ok-soft: hsl(152 56% 93%);
 
-    --warn: hsl(26 90.5% 37.1%);
+    --warn: hsl(28 86% 41%);
     --warn-foreground: hsl(0 0% 100%);
-    --warn-soft: hsl(35 82.6% 95.5%);
+    --warn-soft: hsl(40 92% 92.5%);
 
-    --danger: hsl(0 67% 45.1%);
+    --danger: hsl(354 66% 48%);
     --danger-foreground: hsl(0 0% 100%);
-    --danger-soft: hsl(0 77.8% 96.5%);
+    --danger-soft: hsl(354 86% 95.5%);
 
-    --chart-accent: hsl(213 67.7% 50.2%);
-    --chart-track: hsl(0 0% 91%);
-    --chart-grid: hsl(0 0% 89.8%);
+    --chart-accent: hsl(246 70% 60%);
+    --chart-track: hsl(234 38% 92%);
+    --chart-grid: hsl(234 32% 90%);
 
-    --grade-1: hsl(213 85.2% 89.4%);
-    --grade-2: hsl(213 76.6% 73.1%);
-    --grade-3: hsl(213 76.8% 56.1%);
-    --grade-4: hsl(213 71.9% 39%);
+    --grade-1: hsl(246 86% 92%);
+    --grade-2: hsl(246 76% 80%);
+    --grade-3: hsl(246 70% 66%);
+    --grade-4: hsl(246 58% 50%);
 }
 
 .dark {
@@ -193,6 +203,7 @@
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
+    --card-shadow: 0 0 #0000;
     --sidebar-background: hsl(0 0% 7%);
     --sidebar-foreground: hsl(0 0% 95.9%);
     --sidebar-primary: hsl(0 0% 98%);

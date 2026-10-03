@@ -19,7 +19,7 @@ const props = defineProps<Props>();
     <section
         :class="
             cn(
-                'bg-card text-card-foreground overflow-hidden rounded-xl border',
+                'bg-card text-card-foreground shadow-card overflow-hidden rounded-xl border',
                 props.class,
             )
         "
@@ -32,7 +32,7 @@ const props = defineProps<Props>();
                 <div class="flex min-w-0 items-start gap-3">
                     <span
                         v-if="icon"
-                        class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg"
+                        class="bg-primary/10 text-primary dark:bg-muted dark:text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg"
                         aria-hidden="true"
                     >
                         <component :is="icon" class="size-4" />

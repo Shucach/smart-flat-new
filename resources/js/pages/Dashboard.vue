@@ -203,10 +203,15 @@ function usageTone(percent: number): ChartTone {
                     :href="item.href"
                     class="hover:bg-accent/50 border-sidebar-border/70 dark:border-sidebar-border flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
                 >
-                    <component
-                        :is="item.icon"
-                        class="text-primary size-5 shrink-0"
-                    />
+                    <span
+                        :class="[
+                            'flex size-9 shrink-0 items-center justify-center rounded-lg bg-current/12',
+                            item.colorClass,
+                        ]"
+                        aria-hidden="true"
+                    >
+                        <component :is="item.icon" class="size-5" />
+                    </span>
                     <span class="min-w-0 flex-1">
                         <span class="block truncate text-sm font-medium">
                             {{ item.title }}
